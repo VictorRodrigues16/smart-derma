@@ -1,0 +1,2 @@
+Fontes da marca para a imagem de compartilhamento (app/opengraph-image.tsx).
+Bricolage Grotesque e Figtree, licença SIL Open Font License 1.1, tiradas dos pacotes @fontsource.

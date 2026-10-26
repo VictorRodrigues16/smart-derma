@@ -1,0 +1,25 @@
+services:
+  banco:
+    image: postgres:17-alpine
+    container_name: smart-derma-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: smartderma
+      POSTGRES_PASSWORD: smartderma
+      POSTGRES_DB: smart_derma
+    ports:
+      # 5490 para não brigar com os Postgres dos outros projetos.
+      - '5490:5432'
+    volumes:
+      - dados:/var/lib/postgresql/data
+    # A máquina já roda outros bancos; este não precisa de mais que isso.
+    mem_limit: 512m
+    cpus: 1
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U smartderma -d smart_derma']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  dados:

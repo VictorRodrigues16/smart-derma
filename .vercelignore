@@ -1,0 +1,8 @@
+# Nunca enviar segredos locais nem lixo de desenvolvimento para a Vercel.
+.env
+.env.*
+!.env.example
+node_modules
+.next
+scripts/fotos-teste
+*.tsbuildinfo

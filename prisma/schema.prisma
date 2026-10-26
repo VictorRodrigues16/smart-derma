@@ -1,0 +1,142 @@
+// Banco da Smart Derma.
+// Nomes em português, como o resto do código e o vocabulário da loja.
+//
+// A foto do rosto NÃO tem coluna: ela vai para a análise e é descartada.
+// Fica só o resultado (tipo de pele, medidas e produtos indicados).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Papel {
+  cliente
+  loja
+}
+
+/// A ordem dos valores é a ordem em que os produtos entram na rotina.
+enum Categoria {
+  limpeza
+  tonico
+  esfoliante
+  serum
+  tratamento
+  area_dos_olhos
+  hidratante
+  protetor
+  mascara
+}
+
+enum Turno {
+  manha
+  noite
+  ambos
+}
+
+enum StatusAnalise {
+  concluida
+  foto_recusada
+  erro
+}
+
+model Usuario {
+  id        String    @id @default(cuid())
+  nome      String
+  email     String    @unique
+  senhaHash String
+  papel     Papel     @default(cliente)
+  ativo     Boolean   @default(true)
+  criadoEm  DateTime  @default(now())
+  analises  Analise[]
+}
+
+/// Catálogo da farmácia parceira. A IA só pode indicar o que está aqui,
+/// ativo e com estoque.
+model Produto {
+  id             String         @id @default(cuid())
+  /// Código curto que a IA usa para se referir ao produto (ex.: SD-LIM-01).
+  codigo         String         @unique
+  nome           String
+  marca          String
+  categoria      Categoria
+  descricao      String
+  /// Ex.: ["Niacinamida 10%", "Zinco PCA 1%"]
+  ativos         String[]
+  /// Tipos de pele para os quais o produto serve: oleosa, mista, seca, normal.
+  tiposPele      String[]
+  /// O que o produto trata: oleosidade, acne, poros, manchas, linhas,
+  /// ressecamento, vermelhidao, olheiras.
+  indicacoes     String[]
+  turno          Turno
+  modoDeUso      String
+  /// Foto do produto no Vercel Blob (enviada pela loja). Sem foto, a tela
+  /// desenha a embalagem pela categoria.
+  imagemUrl      String?
+  precoCentavos  Int
+  estoque        Int
+  corredor       String
+  /// Travas de segurança aplicadas em código antes da IA ver o catálogo.
+  evitarGestante Boolean        @default(false)
+  evitarSensivel Boolean        @default(false)
+  apenasAdulto   Boolean        @default(false)
+  ativo          Boolean        @default(true)
+  criadoEm       DateTime       @default(now())
+  atualizadoEm   DateTime       @updatedAt
+  recomendacoes  Recomendacao[]
+}
+
+model Analise {
+  id                  String         @id @default(cuid())
+  usuarioId           String
+  usuario             Usuario        @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  status              StatusAnalise
+  /// Respostas do questionário (ver lib/tipos.ts → Respostas).
+  respostas           Json
+  consentimentoEm     DateTime
+  tipoPele            String?
+  resumo              String?
+  /// [{ chave, nota, confianca, observacao }]
+  medidas             Json?
+  pontosDeAtencao     String[]       @default([])
+  sugerirDermatologista Boolean      @default(false)
+  /// Por que a foto não serviu (quando status = foto_recusada) ou o erro.
+  motivoRecusa        String?
+  orientacaoFoto      String?
+  modelo              String?
+  tokensEntrada       Int            @default(0)
+  tokensSaida         Int            @default(0)
+  tokensCacheLidos    Int            @default(0)
+  duracaoMs           Int            @default(0)
+  /// Retorno da pessoa: 1 = a análise acertou, -1 = errou.
+  avaliacao           Int?
+  comentarioAvaliacao String?
+  criadoEm            DateTime       @default(now())
+  recomendacoes       Recomendacao[]
+
+  @@index([usuarioId, criadoEm])
+  @@index([criadoEm])
+}
+
+model Recomendacao {
+  id        String  @id @default(cuid())
+  analiseId String
+  analise   Analise @relation(fields: [analiseId], references: [id], onDelete: Cascade)
+  produtoId String
+  produto   Produto @relation(fields: [produtoId], references: [id])
+  turno     Turno
+  ordem     Int
+  motivo    String
+
+  @@index([analiseId])
+  @@index([produtoId])
+}
+
+/// Freio de tentativas de login (por e-mail e por IP).
+model TentativaAcesso {
+  chave      String   @id
+  tentativas Int
+  ate        DateTime
+}

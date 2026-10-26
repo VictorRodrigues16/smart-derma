@@ -1,0 +1,270 @@
+@import 'tailwindcss';
+
+/* ------------------------------------------------------------------ */
+/* Tokens da Smart Derma                                               */
+/* ------------------------------------------------------------------ */
+
+@theme static {
+  --color-petroleo: #0e5a55;
+  --color-petroleo-escuro: #0b4642;
+  --color-pele: #efc7bd;
+  --color-rosado: #fbefec;
+  --color-nevoa: #eef3f2;
+  --color-tinta: #16201f;
+  --color-tinta-suave: #56625f;
+  --color-linha: #dce5e3;
+  --color-menta: #e3f0ee;
+  --color-terracota: #d88f7e;
+  --color-terracota-claro: #e8b4a6;
+  --color-terracota-trilho: #f6e1db;
+  /* Terracota escura: texto de alerta legível sobre o rosado (contraste 5,4:1). */
+  --color-terracota-escuro: #9c4a38;
+
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-titulo: var(--font-bricolage), var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+
+  --ease-suave: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --shadow-suave: 0 1px 2px rgb(22 32 31 / 0.05), 0 12px 28px -16px rgb(22 32 31 / 0.18);
+  --shadow-flutuante: 0 22px 44px -24px rgb(11 70 66 / 0.45);
+}
+
+@theme {
+  --animate-marchar: marchar 2.6s linear infinite;
+  --animate-escanear: escanear 3.4s ease-in-out infinite alternate;
+  --animate-respirar: respirar 2.6s ease-in-out infinite;
+  --animate-aparecer: aparecer 0.32s var(--ease-suave) both;
+
+  /* O contorno anda um período do tracejado por volta; o período chega pela variável --periodo. */
+  @keyframes marchar {
+    to {
+      stroke-dashoffset: var(--periodo, -18);
+    }
+  }
+  /* A faixa tem 28% da altura do oval: 357% da altura dela é o oval inteiro. */
+  @keyframes escanear {
+    from {
+      transform: translateY(-100%);
+    }
+    to {
+      transform: translateY(357%);
+    }
+  }
+  @keyframes aparecer {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes respirar {
+    0%,
+    100% {
+      opacity: 0.45;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Base                                                                */
+/* ------------------------------------------------------------------ */
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    min-height: 100dvh;
+    background: #fff;
+    color: var(--color-tinta);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-titulo);
+    font-optical-sizing: auto;
+    letter-spacing: -0.022em;
+    line-height: 1.08;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* O Tailwind 4 não coloca a mãozinha em botão. Regra única, em vez de classe por classe. */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  [role='tab'],
+  [role='radio'],
+  [role='checkbox'],
+  [role='switch'],
+  a[href],
+  summary,
+  label[for] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled='true'] {
+    cursor: not-allowed;
+  }
+
+  button,
+  input,
+  textarea {
+    font: inherit;
+    letter-spacing: inherit;
+  }
+
+  ::placeholder {
+    color: color-mix(in srgb, var(--color-tinta-suave) 85%, white);
+    opacity: 1;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-petroleo);
+    outline-offset: 3px;
+  }
+
+  ::selection {
+    background: var(--color-pele);
+    color: var(--color-tinta);
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Utilidades próprias                                                 */
+/* ------------------------------------------------------------------ */
+
+@utility sem-barra {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Respiro embaixo para barras fixas, respeitando a área segura do iPhone. */
+@utility pb-seguro {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+/* ------------------------------------------------------------------ */
+/* Componentes                                                         */
+/* ------------------------------------------------------------------ */
+
+@layer components {
+  /*
+   * Gaveta lateral: entra da direita para a esquerda, suave. Serve para o menu
+   * do celular na área da loja e para o painel de edição de produto.
+   * Fica fora do <header>: backdrop-filter prenderia um elemento fixo dentro dele.
+   */
+  .gaveta-fundo {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    background: rgb(22 32 31 / 0.42);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .gaveta-fundo[data-aberto='sim'] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .gaveta {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 80;
+    display: flex;
+    flex-direction: column;
+    width: min(86vw, 380px);
+    background: #fff;
+    box-shadow: -24px 0 60px -30px rgb(22 32 31 / 0.45);
+    transform: translateX(104%);
+    visibility: hidden;
+    transition:
+      transform 0.42s var(--ease-suave),
+      visibility 0s linear 0.42s;
+  }
+  .gaveta[data-largura='painel'] {
+    width: min(100vw, 560px);
+  }
+  .gaveta[data-aberto='sim'] {
+    transform: none;
+    visibility: visible;
+    transition:
+      transform 0.42s var(--ease-suave),
+      visibility 0s;
+  }
+
+  .gaveta-item {
+    opacity: 0;
+    transform: translateX(18px);
+    transition:
+      opacity 0.35s ease,
+      transform 0.35s var(--ease-suave);
+  }
+  .gaveta[data-aberto='sim'] .gaveta-item {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Barra de medida: o preenchimento cresce quando a barra entra na tela. */
+  .medida-preenchimento {
+    width: 0;
+    transition: width 0.95s var(--ease-suave);
+  }
+  .medida-preenchimento[data-visivel='sim'] {
+    width: var(--medida-largura);
+  }
+
+  /* Filme da câmera espelhado, como a pessoa se vê no espelho. */
+  .camera-espelhada {
+    transform: scaleX(-1);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Movimento reduzido: sem animação decorativa                         */
+/* ------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
+}
